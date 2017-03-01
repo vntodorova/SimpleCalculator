@@ -8,8 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController{
+    NSString *firstDigit;
+    NSString *secondDigit;
+    NSString *operation;
+    NSMutableArray *tableData;
+}
 
+@property (weak, nonatomic) IBOutlet UITextField *textField;
+
+- (IBAction)onNumberButtonPressed:(UIButton *)sender;
+- (IBAction)onOperationPressed:(UIButton *)sender;
+- (IBAction)onResultPressed:(UIButton *)sender;
 
 @end
 
