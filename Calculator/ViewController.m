@@ -8,7 +8,7 @@
 
 #import "ViewController.h"
 
-@interface ViewController () <UITableViewDelegate,UITableViewDataSource>
+@interface ViewController () <UITableViewDelegate,UITableViewDataSource,UIGestureRecognizerDelegate>
 
 
 @end
@@ -16,6 +16,11 @@
 
 @implementation ViewController
 
+NSString *firstDigit;
+NSString *secondDigit;
+NSString *operation;
+NSMutableArray *tableDataResult;
+NSMutableArray *tableDataExpr;
 
 
 - (void)viewDidLoad {
@@ -23,14 +28,31 @@
     firstDigit = [[NSString alloc] init];
     secondDigit = [[NSString alloc] init];
     operation = @"";
-    tableData = [[NSMutableArray alloc] init];
-    // Do any additional setup after loading the view, typically from a nib.
+    tableDataResult = [[NSMutableArray alloc] init];
+    tableDataExpr = [[NSMutableArray alloc] init];
+    
+    
+    UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc]
+                                          initWithTarget:self action:@selector(handleLongPress:)];
+    lpgr.minimumPressDuration = 2.0; //seconds
+    lpgr.delegate = self;
+    [self.tableView addGestureRecognizer:lpgr];
 }
 
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(void)handleLongPress:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    CGPoint p = [gestureRecognizer locationInView:self.tableView];
+    NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
+    NSString *copyString = [tableDataResult objectAtIndex:indexPath.row];
+    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+    [pb setString:copyString];
+    NSLog(@"Copied to clipboard : %s",[copyString UTF8String]);
 }
 
 
@@ -70,10 +92,20 @@
         } else {
             result = first / second;
         }
-        
     }
 
+    [[self tableView] beginUpdates];
+    
+    [tableDataResult addObject:[NSString stringWithFormat:@"%i",result]];
+    NSArray *path  = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:tableDataResult.count -1 inSection:0]];
+    [[self tableView] insertRowsAtIndexPaths: path withRowAnimation:UITableViewRowAnimationTop];
+    
+    [tableDataExpr addObject:[NSString stringWithFormat:@"%i %s %i",first,[operation UTF8String],second]];
+
     self.textField.text = [NSString stringWithFormat:@"%i", result];
+    
+    [[self tableView] endUpdates];
+    
     firstDigit = @"";
     secondDigit = @"";
     operation = @"";
@@ -82,14 +114,18 @@
 #pragma mark - Table Delegates
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return [tableData count];o
+    return [tableDataResult count];
 }
 
-// Row display. Implementers should *always* try to reuse cells by setting each cell's reuseIdentifier and querying for available reusable cells with dequeueReusableCellWithIdentifier:
-// Cell gets various attributes set automatically based on table (separators) and data source (accessory views, editing controls)
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+        static NSString *cellId = @"cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
     
+    cell.textLabel.text = [tableDataResult objectAtIndex:indexPath.row];
+    cell.detailTextLabel.text = [tableDataExpr objectAtIndex:indexPath.row];
+    
+    return cell;
 }
 
 
